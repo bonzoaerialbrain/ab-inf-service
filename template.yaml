@@ -1,0 +1,17 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+  FastAPIFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.main.handler # Ensure main.py defines a `handler` method for Lambda
+      Runtime: python3.9
+      CodeUri: .
+      Timeout: 15
+      MemorySize: 128
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Environment:
+        Variables:
+          MONGO_URI: "http://localhost:27017"

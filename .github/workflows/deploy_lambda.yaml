@@ -1,0 +1,40 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install AWS SAM CLI
+        run: |
+          sudo apt-get update && sudo apt-get install -y unzip curl
+          curl -Lo sam-installation.zip https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+          unzip sam-installation.zip -d sam-installation
+          sudo ./sam-installation/install
+
+      - name: Install dependencies
+        working-directory: ./app
+        run: |
+          pip install -r requirements.txt -t .
+
+      - name: Package and deploy with AWS SAM
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "us-east-1"
+        run: |
+          sam package --template-file template.yaml --output-template-file packaged.yaml --s3-bucket deployment-test-github-actions
+          sam deploy --template-file packaged.yaml --stack-name ab-inf-service --capabilities CAPABILITY_IAM
